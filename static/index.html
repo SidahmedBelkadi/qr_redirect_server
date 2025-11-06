@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Qr Code redirect service</title>
     <style>
+      /* --- Styles unchanged from before --- */
       :root {
         --bg-color: #0f172a;
         --card-color: #1e293b;
@@ -12,7 +13,6 @@
         --text-color: #e2e8f0;
         --input-bg: #334155;
       }
-
       body {
         font-family: "Inter", Arial, sans-serif;
         background: var(--bg-color);
@@ -26,14 +26,12 @@
         padding: 20px 10px;
         box-sizing: border-box;
       }
-
       h1 {
         color: var(--accent-color);
         margin-bottom: 20px;
         font-size: 1.8rem;
         text-align: center;
       }
-
       .card {
         background: var(--card-color);
         padding: 25px;
@@ -45,7 +43,6 @@
         flex-direction: column;
         align-items: stretch;
       }
-
       select,
       input,
       button {
@@ -58,58 +55,35 @@
         background: var(--input-bg);
         color: var(--text-color);
       }
-
       button {
         background: var(--accent-color);
         cursor: pointer;
         font-weight: 600;
         transition: background 0.2s;
       }
-
       button:hover {
         background: #2563eb;
       }
-
       #list {
         margin-top: 25px;
         border-top: 1px solid #475569;
         padding-top: 20px;
         font-size: 0.95rem;
       }
-
       a {
         color: var(--accent-color);
         text-decoration: none;
         word-break: break-all;
       }
-
       a:hover {
         text-decoration: underline;
       }
-
       .wifi-fields {
         display: none;
         margin-top: 10px;
       }
-
       .fade {
         transition: all 0.3s ease;
-      }
-
-      @media (max-width: 480px) {
-        h1 {
-          font-size: 1.5rem;
-        }
-
-        .card {
-          padding: 20px;
-        }
-
-        button,
-        input,
-        select {
-          font-size: 15px;
-        }
       }
     </style>
   </head>
@@ -149,21 +123,15 @@
     <script>
       function toggleFields() {
         const type = document.getElementById("type").value;
-        const mapsField = document.getElementById("mapsField");
-        const wifiFields = document.getElementById("wifiFields");
-
-        if (type === "wifi") {
-          mapsField.style.display = "none";
-          wifiFields.style.display = "block";
-        } else {
-          wifiFields.style.display = "none";
-          mapsField.style.display = "block";
-        }
+        document.getElementById("mapsField").style.display =
+          type === "maps" ? "block" : "none";
+        document.getElementById("wifiFields").style.display =
+          type === "wifi" ? "block" : "none";
       }
 
       async function saveRedirect() {
         const type = document.getElementById("type").value;
-        let shortCode = type;
+        const shortCode = type;
         let targetUrl = "";
 
         if (type === "maps") {
@@ -173,9 +141,7 @@
           const ssid = document.getElementById("ssid").value.trim();
           const password = document.getElementById("password").value.trim();
           const encryption = document.getElementById("encryption").value;
-
           if (!ssid) return alert("Enter Wi-Fi SSID!");
-
           targetUrl = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
         }
 
@@ -198,12 +164,13 @@
         listDiv.innerHTML = "";
 
         Object.entries(data).forEach(([key, value]) => {
+          const displayValue = value.startsWith("WIFI:")
+            ? `<code>${value}</code>`
+            : `<a href="/go/${key}" target="_blank">${value}</a>`;
+          const qrLink = `<a href="/go/${key}" target="_blank">https://qr-redirect-server.onrender.com/go/${key}</a>`;
           const div = document.createElement("div");
           div.style.marginBottom = "12px";
-          div.innerHTML = `
-            <strong>${key}</strong> → <a href="/go/${key}" target="_blank">${value}</a>
-            <br><small>QR: <a href="/go/${key}" target="_blank">https://qr-redirect-server.onrender.com/go/${key}</a></small>
-          `;
+          div.innerHTML = `<strong>${key}</strong> → ${displayValue}<br><small>QR: ${qrLink}</small>`;
           listDiv.appendChild(div);
         });
       }

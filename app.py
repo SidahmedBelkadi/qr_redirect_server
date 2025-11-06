@@ -22,9 +22,15 @@ def save_urls(data):
 def go(short_code):
     data = load_urls()
     target_url = data.get(short_code)
-    if target_url:
-        return redirect(target_url)
-    return jsonify({"error": "Short code not found"}), 404
+    if not target_url:
+        return jsonify({"error": "Short code not found"}), 404
+
+    # Serve raw Wi-Fi payload for 'wifi'
+    if short_code.lower() == "wifi" and target_url.startswith("WIFI:"):
+        return target_url, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+    # Normal redirect for other URLs
+    return redirect(target_url)
 
 @app.route("/api/add_url", methods=["POST"])
 def add_url():
@@ -49,7 +55,5 @@ def serve_index():
     return send_from_directory("static", "index.html")
 
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))  # Use the PORT Render provides
-    app.run(host="0.0.0.0", port=port)        # Bind to all interfaces
-
+    port = int(os.environ.get("PORT", 5000))  # Render port
+    app.run(host="0.0.0.0", port=port)
