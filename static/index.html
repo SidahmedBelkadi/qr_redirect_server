@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Qr Code redirect service</title>
+    <style>
+      :root {
+        --bg-color: #0f172a;
+        --card-color: #1e293b;
+        --accent-color: #3b82f6;
+        --text-color: #e2e8f0;
+        --input-bg: #334155;
+      }
+
+      body {
+        font-family: "Inter", Arial, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px 10px;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        font-size: 1.8rem;
+        text-align: center;
+      }
+
+      .card {
+        background: var(--card-color);
+        padding: 25px;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      select,
+      input,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        background: var(--input-bg);
+        color: var(--text-color);
+      }
+
+      button {
+        background: var(--accent-color);
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #2563eb;
+      }
+
+      #list {
+        margin-top: 25px;
+        border-top: 1px solid #475569;
+        padding-top: 20px;
+        font-size: 0.95rem;
+      }
+
+      a {
+        color: var(--accent-color);
+        text-decoration: none;
+        word-break: break-all;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .wifi-fields {
+        display: none;
+        margin-top: 10px;
+      }
+
+      .fade {
+        transition: all 0.3s ease;
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .card {
+          padding: 20px;
+        }
+
+        button,
+        input,
+        select {
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Custom Madjoudj Qr Redirect Manager</h1>
+
+    <div class="card fade">
+      <label for="type">Redirect Type:</label>
+      <select id="type" onchange="toggleFields()">
+        <option value="maps">Maps</option>
+        <option value="wifi">Wi-Fi</option>
+      </select>
+
+      <div id="mapsField">
+        <input
+          type="url"
+          id="mapsUrl"
+          placeholder="Enter Maps link (https://...)"
+        />
+      </div>
+
+      <div id="wifiFields" class="wifi-fields">
+        <input type="text" id="ssid" placeholder="Wi-Fi SSID" />
+        <input type="text" id="password" placeholder="Password" />
+        <select id="encryption">
+          <option value="WPA">WPA/WPA2</option>
+          <option value="WEP">WEP</option>
+          <option value="nopass">None</option>
+        </select>
+      </div>
+
+      <button onclick="saveRedirect()">Save Redirect</button>
+
+      <div id="list"></div>
+    </div>
+
+    <script>
+      function toggleFields() {
+        const type = document.getElementById("type").value;
+        const mapsField = document.getElementById("mapsField");
+        const wifiFields = document.getElementById("wifiFields");
+
+        if (type === "wifi") {
+          mapsField.style.display = "none";
+          wifiFields.style.display = "block";
+        } else {
+          wifiFields.style.display = "none";
+          mapsField.style.display = "block";
+        }
+      }
+
+      async function saveRedirect() {
+        const type = document.getElementById("type").value;
+        let shortCode = type;
+        let targetUrl = "";
+
+        if (type === "maps") {
+          targetUrl = document.getElementById("mapsUrl").value.trim();
+          if (!targetUrl) return alert("Enter a valid Maps link!");
+        } else {
+          const ssid = document.getElementById("ssid").value.trim();
+          const password = document.getElementById("password").value.trim();
+          const encryption = document.getElementById("encryption").value;
+
+          if (!ssid) return alert("Enter Wi-Fi SSID!");
+
+          targetUrl = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
+        }
+
+        await fetch("/api/add_url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            short_code: shortCode,
+            target_url: targetUrl,
+          }),
+        });
+
+        loadUrls();
+      }
+
+      async function loadUrls() {
+        const res = await fetch("/api/list_urls");
+        const data = await res.json();
+        const listDiv = document.getElementById("list");
+        listDiv.innerHTML = "";
+
+        Object.entries(data).forEach(([key, value]) => {
+          const div = document.createElement("div");
+          div.style.marginBottom = "12px";
+          div.innerHTML = `
+            <strong>${key}</strong> → <a href="/go/${key}" target="_blank">${value}</a>
+            <br><small>QR: <a href="/go/${key}" target="_blank">https://your-server.com/go/${key}</a></small>
+          `;
+          listDiv.appendChild(div);
+        });
+      }
+
+      loadUrls();
+      toggleFields();
+    </script>
+  </body>
+</html>
