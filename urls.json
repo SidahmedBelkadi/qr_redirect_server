@@ -1,3 +1,10 @@
 {
-    "wifi": "WIFI:T:WPA;S:jawab_31;P:sniper@8896/;;"
+    "Location": {
+        "user": "RedOne Store",
+        "url": "https://maps.app.goo.gl/BRx8oaxcFdqYp7a28"
+    },
+    "Maps": {
+        "user": "Sidahmed's Office",
+        "url": "https://maps.app.goo.gl/7SzvpyG1sE8aZmQTA"
+    }
 }

@@ -3,180 +3,478 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Qr Code redirect service</title>
+    <title>QR Redirect Manager</title>
     <style>
-      /* --- Styles unchanged from before --- */
       :root {
-        --bg-color: #0f172a;
+        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         --card-color: #1e293b;
+        --card-hover: #252f3f;
         --accent-color: #3b82f6;
+        --accent-hover: #2563eb;
+        --success-color: #10b981;
+        --danger-color: #ef4444;
         --text-color: #e2e8f0;
+        --text-muted: #94a3b8;
         --input-bg: #334155;
+        --border-color: #475569;
       }
-      body {
-        font-family: "Inter", Arial, sans-serif;
-        background: var(--bg-color);
-        color: var(--text-color);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        min-height: 100vh;
+
+      * {
         margin: 0;
-        padding: 20px 10px;
+        padding: 0;
         box-sizing: border-box;
       }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: var(--bg-gradient);
+        color: var(--text-color);
+        min-height: 100vh;
+        padding: 20px 10px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
       h1 {
         color: var(--accent-color);
-        margin-bottom: 20px;
-        font-size: 1.8rem;
+        margin-bottom: 30px;
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
         text-align: center;
+        font-weight: 700;
       }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+      }
+
+      @media (min-width: 768px) {
+        .main-grid {
+          grid-template-columns: 1fr 1.5fr;
+        }
+      }
+
       .card {
         background: var(--card-color);
         padding: 25px;
         border-radius: 16px;
-        width: 100%;
-        max-width: 420px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s;
       }
-      select,
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
       input,
+      select,
       button {
         width: 100%;
-        padding: 12px;
-        margin: 8px 0;
-        border: none;
+        padding: 12px 16px;
+        border: 2px solid transparent;
         border-radius: 8px;
         font-size: 16px;
         background: var(--input-bg);
         color: var(--text-color);
+        transition: all 0.2s;
       }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        background: #3f4e63;
+      }
+
       button {
         background: var(--accent-color);
         cursor: pointer;
         font-weight: 600;
-        transition: background 0.2s;
-      }
-      button:hover {
-        background: #2563eb;
-      }
-      #list {
-        margin-top: 25px;
-        border-top: 1px solid #475569;
-        padding-top: 20px;
-        font-size: 0.95rem;
-      }
-      a {
-        color: var(--accent-color);
-        text-decoration: none;
-        word-break: break-all;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .wifi-fields {
-        display: none;
+        border: none;
         margin-top: 10px;
       }
-      .fade {
-        transition: all 0.3s ease;
+
+      button:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .btn-cancel {
+        background: var(--border-color);
+        margin-top: 5px;
+      }
+
+      .btn-cancel:hover {
+        background: #5a657a;
+      }
+
+      .redirect-list {
+        display: grid;
+        gap: 15px;
+      }
+
+      .redirect-item {
+        background: var(--input-bg);
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid var(--accent-color);
+        transition: all 0.2s;
+      }
+
+      .redirect-item:hover {
+        background: var(--card-hover);
+        transform: translateX(5px);
+      }
+
+      .redirect-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .redirect-key {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--accent-color);
+      }
+
+      .redirect-user {
+        display: inline-block;
+        background: var(--accent-color);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .redirect-url {
+        color: var(--text-muted);
+        word-break: break-all;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+
+      .redirect-url a {
+        color: var(--success-color);
+        text-decoration: none;
+      }
+
+      .redirect-url a:hover {
+        text-decoration: underline;
+      }
+
+      .qr-link {
+        display: inline-block;
+        background: rgba(59, 130, 246, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: var(--accent-color);
+        text-decoration: none;
+        margin-top: 5px;
+      }
+
+      .qr-link:hover {
+        background: rgba(59, 130, 246, 0.2);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        width: auto;
+        margin: 0;
+      }
+
+      .btn-edit {
+        background: var(--success-color);
+      }
+
+      .btn-edit:hover {
+        background: #059669;
+      }
+
+      .btn-delete {
+        background: var(--danger-color);
+      }
+
+      .btn-delete:hover {
+        background: #dc2626;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+      }
+
+      .empty-state svg {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+
+      h2 {
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        color: var(--text-color);
+      }
+
+      .editing-badge {
+        display: inline-block;
+        background: var(--success-color);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-left: 10px;
+      }
+
+      @media (max-width: 767px) {
+        body {
+          padding: 15px 10px;
+        }
+
+        .card {
+          padding: 20px;
+        }
+
+        .redirect-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .actions {
+          width: 100%;
+        }
+
+        .btn-small {
+          flex: 1;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>Custom Madjoudj Qr Redirect Manager</h1>
+    <div class="container">
+      <h1>🔗 QR Redirect Manager</h1>
 
-    <div class="card fade">
-      <label for="type">Redirect Type:</label>
-      <select id="type" onchange="toggleFields()">
-        <option value="maps">Maps</option>
-        <option value="wifi">Wi-Fi</option>
-      </select>
+      <div class="main-grid">
+        <!-- Form Section -->
+        <div class="card">
+          <h2 id="formTitle">Create New Redirect</h2>
 
-      <div id="mapsField">
-        <input
-          type="url"
-          id="mapsUrl"
-          placeholder="Enter Maps link (https://...)"
-        />
+          <div class="form-group">
+            <label for="userName">User Name</label>
+            <input
+              type="text"
+              id="userName"
+              placeholder="e.g., John, Marketing Team"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="shortCode">Short Code (Key)</label>
+            <input
+              type="text"
+              id="shortCode"
+              placeholder="e.g., maps, store, contact"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="targetUrl">Target URL</label>
+            <input
+              type="url"
+              id="targetUrl"
+              placeholder="https://maps.google.com/..."
+            />
+          </div>
+
+          <button onclick="saveRedirect()" id="saveBtn">Create Redirect</button>
+          <button
+            onclick="cancelEdit()"
+            class="btn-cancel"
+            id="cancelBtn"
+            style="display: none"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <!-- List Section -->
+        <div class="card">
+          <h2>Your Redirects</h2>
+          <div id="list" class="redirect-list"></div>
+        </div>
       </div>
-
-      <div id="wifiFields" class="wifi-fields">
-        <input type="text" id="ssid" placeholder="Wi-Fi SSID" />
-        <input type="text" id="password" placeholder="Password" />
-        <select id="encryption">
-          <option value="WPA">WPA/WPA2</option>
-          <option value="WEP">WEP</option>
-          <option value="nopass">None</option>
-        </select>
-      </div>
-
-      <button onclick="saveRedirect()">Save Redirect</button>
-
-      <div id="list"></div>
     </div>
 
     <script>
-      function toggleFields() {
-        const type = document.getElementById("type").value;
-        document.getElementById("mapsField").style.display =
-          type === "maps" ? "block" : "none";
-        document.getElementById("wifiFields").style.display =
-          type === "wifi" ? "block" : "none";
-      }
+      let editingKey = null;
 
       async function saveRedirect() {
-        const type = document.getElementById("type").value;
-        const shortCode = type;
-        let targetUrl = "";
+        const userName = document.getElementById("userName").value.trim();
+        const shortCode = document.getElementById("shortCode").value.trim();
+        const targetUrl = document.getElementById("targetUrl").value.trim();
 
-        if (type === "maps") {
-          targetUrl = document.getElementById("mapsUrl").value.trim();
-          if (!targetUrl) return alert("Enter a valid Maps link!");
-        } else {
-          const ssid = document.getElementById("ssid").value.trim();
-          const password = document.getElementById("password").value.trim();
-          const encryption = document.getElementById("encryption").value;
-          if (!ssid) return alert("Enter Wi-Fi SSID!");
-          targetUrl = `WIFI:T:${encryption};S:${ssid};P:${password};;`;
-        }
+        if (!userName) return alert("⚠️ Please enter a user name!");
+        if (!shortCode) return alert("⚠️ Please enter a short code!");
+        if (!targetUrl) return alert("⚠️ Please enter a target URL!");
 
-        await fetch("/api/add_url", {
-          method: "POST",
+        const data = {
+          user: userName,
+          url: targetUrl,
+        };
+
+        const endpoint = editingKey
+          ? `/api/update_url/${editingKey}`
+          : "/api/add_url";
+        const method = editingKey ? "PUT" : "POST";
+
+        const body = editingKey
+          ? JSON.stringify(data)
+          : JSON.stringify({ short_code: shortCode, ...data });
+
+        const response = await fetch(endpoint, {
+          method: method,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            short_code: shortCode,
-            target_url: targetUrl,
-          }),
+          body: body,
         });
 
-        loadUrls();
+        if (response.ok) {
+          clearForm();
+          loadUrls();
+        } else {
+          const error = await response.json();
+          alert("❌ Error: " + (error.error || "Failed to save"));
+        }
       }
 
       async function loadUrls() {
         const res = await fetch("/api/list_urls");
         const data = await res.json();
         const listDiv = document.getElementById("list");
+
+        if (Object.keys(data).length === 0) {
+          listDiv.innerHTML = `
+            <div class="empty-state">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <p>No redirects yet. Create your first one!</p>
+            </div>
+          `;
+          return;
+        }
+
         listDiv.innerHTML = "";
 
         Object.entries(data).forEach(([key, value]) => {
-          const displayValue = value.startsWith("WIFI:")
-            ? `<code>${value}</code>`
-            : `<a href="/go/${key}" target="_blank">${value}</a>`;
-          const qrLink = `<a href="/go/${key}" target="_blank">https://qr-redirect-server.onrender.com/go/${key}</a>`;
           const div = document.createElement("div");
-          div.style.marginBottom = "12px";
-          div.innerHTML = `<strong>${key}</strong> → ${displayValue}<br><small>QR: ${qrLink}</small>`;
+          div.className = "redirect-item";
+          div.innerHTML = `
+            <div class="redirect-header">
+              <span class="redirect-key">${key}</span>
+              <span class="redirect-user">${value.user}</span>
+            </div>
+            <div class="redirect-url">
+              <a href="${value.url}" target="_blank">${value.url}</a>
+            </div>
+            <a href="/go/${key}" class="qr-link" target="_blank">
+              🔗 https://qr-redirect-server.onrender.com/go/${key}
+            </a>
+            <div class="actions">
+              <button class="btn-small btn-edit" onclick="editRedirect('${key}')">✏️ Edit</button>
+              <button class="btn-small btn-delete" onclick="deleteRedirect('${key}')">🗑️ Delete</button>
+            </div>
+          `;
           listDiv.appendChild(div);
         });
       }
 
+      function editRedirect(key) {
+        fetch("/api/list_urls")
+          .then((res) => res.json())
+          .then((data) => {
+            const item = data[key];
+            if (!item) return;
+
+            editingKey = key;
+            document.getElementById("userName").value = item.user;
+            document.getElementById("shortCode").value = key;
+            document.getElementById("shortCode").disabled = true;
+            document.getElementById("targetUrl").value = item.url;
+            document.getElementById(
+              "formTitle"
+            ).innerHTML = `Edit Redirect <span class="editing-badge">Editing: ${key}</span>`;
+            document.getElementById("saveBtn").textContent =
+              "💾 Update Redirect";
+            document.getElementById("cancelBtn").style.display = "block";
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+      }
+
+      async function deleteRedirect(key) {
+        if (!confirm(`Are you sure you want to delete "${key}"?`)) return;
+
+        const response = await fetch(`/api/delete_url/${key}`, {
+          method: "DELETE",
+        });
+
+        if (response.ok) {
+          loadUrls();
+        } else {
+          alert("❌ Failed to delete redirect");
+        }
+      }
+
+      function cancelEdit() {
+        clearForm();
+      }
+
+      function clearForm() {
+        editingKey = null;
+        document.getElementById("userName").value = "";
+        document.getElementById("shortCode").value = "";
+        document.getElementById("shortCode").disabled = false;
+        document.getElementById("targetUrl").value = "";
+        document.getElementById("formTitle").textContent =
+          "Create New Redirect";
+        document.getElementById("saveBtn").textContent = "Create Redirect";
+        document.getElementById("cancelBtn").style.display = "none";
+      }
+
       loadUrls();
-      toggleFields();
     </script>
   </body>
 </html>
