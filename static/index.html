@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QR Redirect Manager</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
       :root {
         --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -137,11 +138,60 @@
         border-radius: 12px;
         border-left: 4px solid var(--accent-color);
         transition: all 0.2s;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: start;
       }
 
       .redirect-item:hover {
         background: var(--card-hover);
         transform: translateX(5px);
+      }
+
+      .redirect-content {
+        flex: 1;
+      }
+
+      .qr-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .qr-code {
+        width: 150px;
+        height: 150px;
+      }
+
+      .qr-code canvas,
+      .qr-code img {
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 8px;
+      }
+
+      .btn-download {
+        background: var(--accent-color);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: none;
+        font-weight: 600;
+        transition: all 0.2s;
+        width: 100%;
+      }
+
+      .btn-download:hover {
+        background: var(--accent-hover);
+        transform: translateY(-2px);
       }
 
       .redirect-header {
@@ -273,6 +323,15 @@
           align-items: flex-start;
         }
 
+        .redirect-item {
+          grid-template-columns: 1fr;
+        }
+
+        .qr-section {
+          order: -1;
+          margin-bottom: 15px;
+        }
+
         .actions {
           width: 100%;
         }
@@ -401,23 +460,43 @@
         Object.entries(data).forEach(([key, value]) => {
           const div = document.createElement("div");
           div.className = "redirect-item";
+
+          const qrId = `qr-${key}`;
+          const redirectUrl = `https://qr-redirect-server.onrender.com/go/${key}`;
+
           div.innerHTML = `
-            <div class="redirect-header">
-              <span class="redirect-key">${key}</span>
-              <span class="redirect-user">${value.user}</span>
+            <div class="redirect-content">
+              <div class="redirect-header">
+                <span class="redirect-key">${key}</span>
+                <span class="redirect-user">${value.user}</span>
+              </div>
+              <div class="redirect-url">
+                <a href="${value.url}" target="_blank">${value.url}</a>
+              </div>
+              <a href="/go/${key}" class="qr-link" target="_blank">
+                🔗 ${redirectUrl}
+              </a>
+              <div class="actions">
+                <button class="btn-small btn-edit" onclick="editRedirect('${key}')">✏️ Edit</button>
+                <button class="btn-small btn-delete" onclick="deleteRedirect('${key}')">🗑️ Delete</button>
+              </div>
             </div>
-            <div class="redirect-url">
-              <a href="${value.url}" target="_blank">${value.url}</a>
-            </div>
-            <a href="/go/${key}" class="qr-link" target="_blank">
-              🔗 https://qr-redirect-server.onrender.com/go/${key}
-            </a>
-            <div class="actions">
-              <button class="btn-small btn-edit" onclick="editRedirect('${key}')">✏️ Edit</button>
-              <button class="btn-small btn-delete" onclick="deleteRedirect('${key}')">🗑️ Delete</button>
+            <div class="qr-section">
+              <div id="${qrId}" class="qr-code"></div>
+              <button class="btn-download" onclick="downloadQR('${qrId}', '${key}')">📥 Download QR</button>
             </div>
           `;
           listDiv.appendChild(div);
+
+          // Generate QR code
+          new QRCode(document.getElementById(qrId), {
+            text: redirectUrl,
+            width: 150,
+            height: 150,
+            colorDark: "#1e293b",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+          });
         });
       }
 
@@ -472,6 +551,25 @@
           "Create New Redirect";
         document.getElementById("saveBtn").textContent = "Create Redirect";
         document.getElementById("cancelBtn").style.display = "none";
+      }
+
+      function downloadQR(qrId, key) {
+        const qrElement = document.getElementById(qrId);
+        const canvas = qrElement.querySelector("canvas");
+
+        if (canvas) {
+          // Convert canvas to blob and download
+          canvas.toBlob(function (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `qr-${key}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          });
+        }
       }
 
       loadUrls();
